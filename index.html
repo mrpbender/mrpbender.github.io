@@ -1,0 +1,567 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Cache-Control" content="no-store" />
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        @font-face {
+            font-family: AndikaNewBasicW;
+            src: url("https://raw.githubusercontent.com/mrpbender/NGSL-Trainer/master/AndikaNewBasic-R.woff") format("woff");
+        }
+
+        * {
+            font-family: AndikaNewBasicW, serif;
+        }
+        .mainHolder {
+            display: flex;
+            height: 75vh;
+            justify-content: center;
+            align-items: center;
+            
+            
+        }
+/*        .mainHolder div{
+            margin: 0;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            align-content:center;
+        }*/
+        header {
+            text-align: center;
+            font-size: 25px;
+            color: #000099;
+        }
+        section:after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+
+        /* Style the footer */
+        footer {
+            background-color: #777;
+            padding: 10px;
+            text-align: center;
+            color: #000099;
+        }
+
+        input {
+            font-size: 11px;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            background-color: rgba(0,0,0,0.25); /*dim the background*/
+        }
+
+        #text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            font-size: 50px;
+            color: white;
+            transform: translate(-50%,-50%);
+            -ms-transform: translate(-50%,-50%);
+        }
+
+        select:hover {
+            border-left: 2px solid #00ff99;
+            border-right: 2px solid #00ff99;
+        }
+
+        .flex-container {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-around;
+        }
+
+        .topButton {
+            border: none;
+            display: inline-block;
+            color: #000099;
+            font-size: 15px;
+            border-radius: 20px;
+            width: 75%;
+            height: 100%;
+            background-image: linear-gradient(to bottom, #66ffc2, #00ff99);
+            box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+            text-align: center;
+            transition-duration: 0.4s;
+        }
+
+        [class*="col-"] {
+            float: left;
+            font-size: 12px;
+
+         }
+        .contentBox {
+            padding: 15px;
+            width: 60%;
+            border: 2px solid black;
+            box-shadow: 0 0 8px #000000;
+        }
+        .col-topBox {
+            width: 20%;
+            background: #00ff99;
+        }
+
+        .topButton:hover {
+            border-radius: 8px;
+            width: 95%;
+        }
+
+        .col-1 {
+            width: 8.33%;
+        }
+
+        .col-2 {
+            width: 16.66%;
+        }
+
+        .col-3 {
+            width: 25%;
+        }
+
+        .col-4 {
+            width: 33.33%;
+        }
+
+        .col-5 {
+            width: 41.66%;
+        }
+
+        .col-6 {
+            width: 50%;
+        }
+
+        .col-7 {
+            width: 58.33%;
+        }
+
+        .col-8 {
+            width: 66.66%;
+        }
+
+        .col-9 {
+            width: 75%;
+        }
+
+        .col-10 {
+            width: 83.33%;
+        }
+
+        .col-11 {
+            width: 91.66%;
+        }
+
+        .col-12 {
+            width: 100%;
+        }
+
+        table, tr, td {
+            border: 1px solid black;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        #MasterTable tr:nth-child(even) {
+            background-color: #cafffa;
+        }
+
+        table tr:nth-child(even) {
+            background-color: #cafffa;
+        }
+
+        table caption {
+            font-size: 15px;
+        }
+
+        table td {
+            width: 4.4%;
+        }
+
+        table tr {
+            height: 15px;
+        }
+    </style>
+    <base target="_top">
+</head>
+<body onunload="CloseRoom()">
+    <header>Classroom Read-Around</header>
+    <div class="mainHolder">
+        <div class="contentBox" id='LandingBox' align="center" >
+         
+                Would you like to open a room or join a room?
+                <hr>
+                <input type='button' class='topButton' value='Open a room' onclick='StartRoom()'>
+                <br>
+                <br />
+              <input type='button' class='topButton' value='Join a room' onclick='JoinRoom()'>
+          </div>
+        <div class='contentBox' id='StudentPrep' style="display:none"  align='center'>
+            Enter the room code below:
+            <input id='JoinRoomName' value=''><span id="RoomErrorText"></span><br><br />
+            Enter your name:
+            <input id='StudentName' value=''><span id="NameErrorText"></span><br>
+            <br />
+            <input type='button' class='topButton' value='Join!' onclick='checkReady()'>
+        </div>
+        <div class='contentBox' id='StudentBox' style="display:none" align='center'>
+            Your Prompt:<br />
+            <div class="col-12" id="Prompt" style="border:2px solid black; font-size:15px"></div><hr />
+            Please type in the box below:
+            <br>
+            <br>
+            <textarea id='MainBox' name='MainBox1' rows=5 style="width:100%; background-color:#c2feff" value="" ></textarea>
+        </div>
+    
+        <div class='contentBox' id='TeacherBox' style="display:none" align='center'>
+            Have your students join the room below:<br />
+            <span id="TeacherRoomCode" style="border:1px solid black; padding-left:6px; padding-right:6px"></span>
+            <br>
+            Enter your prompt here: <br />
+            <textarea id='PromptBox' style="width:100%; background-color:#cafffa"></textarea>
+            <br>
+            <table id='TeacherTable'>
+                <colgroup>
+                    <col span="1" style="width:30%" />
+                    <col span="1" style="width:70%" />
+                </colgroup>
+                <caption>Student Work</caption>
+
+                <tr><th>User</th><th>Text</th></tr>
+            </table>
+            <hr>
+            <input type='button' class='topButton' value='Export work' onclick='ExportRoom()'>
+            <br>
+            <br />
+            <div class="col-6">
+                <input type='button' id="PauseButton" class='topButton' value='Pause Updates' onclick='PauseRoom()'>
+            </div>
+            <div class="col-6">
+                <input type='button' class='topButton' value='Close the room' onclick='CloseRoom()'>
+            </div>
+            
+           
+        </div>
+    </div>
+
+
+
+    <!-- The core Firebase JS SDK is always required and must be listed first -->
+    <script src="https://www.gstatic.com/firebasejs/7.19.1/firebase-app.js"></script>
+
+    <!-- TODO: Add SDKs for Firebase products that you want to use
+         https://firebase.google.com/docs/web/setup#available-libraries -->
+    <script src="https://www.gstatic.com/firebasejs/7.19.1/firebase-analytics.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.19.1/firebase-database.js"></script>
+
+
+
+
+
+
+
+    <script>
+  // Your web app's Firebase configuration
+  var firebaseConfig = {
+    apiKey: "AIzaSyCC4V7OPNBZweczBvfG430jTXe7CXeOo5E",
+    authDomain: "classroom-readaround.firebaseapp.com",
+    databaseURL: "https://classroom-readaround.firebaseio.com",
+    projectId: "classroom-readaround",
+    storageBucket: "classroom-readaround.appspot.com",
+    messagingSenderId: "621228575098",
+    appId: "1:621228575098:web:e6390c952f673988d82ec3",
+    measurementId: "G-R2E6G7MCV8"
+  };
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  firebase.analytics();
+
+  const database = firebase.database();
+  const usersRef = database.ref('/users');
+  var userNum = 0;
+        var TeachTab;
+        var teacher = false;
+
+        function StartRoom() {
+            teacher = true;
+            document.getElementById("TeacherBox").style.display = "block";
+            document.getElementById("LandingBox").style.display = "none";
+            var st = "BCDFGHJKLMNPQRSTVWXZ";
+            var useString = "";
+            var maxLen = st.length
+            for (var x = 0; x < 4; x++) {
+                var pick = Math.floor((Math.random() * maxLen));
+
+                useString += st[pick];
+                st = st.replace(st[pick], '');
+                maxLen = st.length;
+            }
+
+            var gameID = useString;
+            document.getElementById("TeacherRoomCode").innerHTML = gameID;
+
+            firebase.database().ref('/' + gameID + '/').once('value').then(function (snapshot) {
+                if (snapshot.exists()) {
+                    StartRoom();
+                }
+                else {
+                    database.ref('/' + gameID + '/Teacher/').set({
+                        userName: "Teacher",
+                        typed_text: "Prompt"
+                    });
+                    document.getElementById("PromptBox").value = "";
+                    TimePrompt();
+                }
+
+            });
+            var mainTable = document.getElementById("TeacherTable");
+            while (mainTable.rows.length >1) {
+                mainTable.deleteRow(-1);
+            }
+
+            setTimeout(subscribe(gameID), 2000);
+            
+
+        }
+
+        function SavePrompt() {
+            var roombox = document.getElementById("TeacherRoomCode").innerHTML 
+            var room = roombox;
+            var typedText = document.getElementById("PromptBox").value;
+            database.ref('/' + room + '/Teacher/').update({ typed_text: typedText });
+
+        }
+
+        function subscribe(roomName) {
+            var WritingUpdate = firebase.database().ref('/' + roomName + '/');
+            WritingUpdate.on('value', function (snapshot) {
+                updateTeacher(snapshot);
+            });
+
+        }
+        function JoinRoom() {
+
+            document.getElementById("StudentPrep").style.display = "block";
+            document.getElementById("LandingBox").style.display = "none";
+            var namebox = document.getElementById("StudentName");
+            var roombox = document.getElementById("JoinRoomName");
+            namebox.value = "";
+            roombox.value = "";
+        }
+
+        function checkReady() {
+            console.log("Here we are");
+            var namebox = document.getElementById("StudentName");
+            var roombox = document.getElementById("JoinRoomName");
+            var room = roombox.value.toUpperCase();
+            var name = namebox.value;
+            var ok1 = false;
+            var ok2 = false;
+            console.log(room);
+            console.log(name);
+            if (room.length != 4) {
+                roombox.style.border = "thin solid red";
+                document.getElementById("RoomErrorText").innerHTML = "<br>Please enter a valid room code."
+            }
+            else {
+                ok1 = true;
+            }
+            if (!(name.length == 0)) {
+                ok2 = true;
+            }
+            else {
+                namebox.style.border = "thin solid red";
+                document.getElementById("NameErrorText").innerHTML = "<br>Please enter your name."
+            }
+            if (ok1 && ok2) {
+                firebase.database().ref('/' + room + '/').once('value').then(function (snapshot) {
+                    if (snapshot.exists()) {
+                        firebase.database().ref('/' + room + '/' + name + '/').once('value').then(function (snapshot) {
+                            if (!snapshot.exists()) {
+                                database.ref().child(room).child(name).set({
+                                    userName: name,
+                                    typed_text: ""
+                                });
+                                document.getElementById("MainBox").value = "Type here";
+                                document.getElementById("StudentPrep").style.display = "none";
+                                document.getElementById("StudentBox").style.display = "block";
+                                TimeWriting();
+                                document.getElementById("LandingBox").style.display = "none";
+                                SubscribeToPrompt(room);
+                            }
+                            else {
+                                namebox.style.border = "thin solid red"
+                                document.getElementById("NameErrorText").innerHTML = "<br>This name is already in use in this room."
+                            }
+                        });
+                    }
+                    else {
+                        roombox.style.border = "this solid red";
+                        document.getElementById("RoomErrorText").innerHTML = "<br>Please enter a valid room code."
+                    }
+                });
+            }
+        }
+
+        function SubscribeToPrompt(roomName) {
+            var WritingUpdate = firebase.database().ref('/' + roomName + '/Teacher/');
+            WritingUpdate.on('value', function (snapshot) {
+                updatePrompt(snapshot.val());
+            });
+        }
+        function updatePrompt(incoming) {
+            document.getElementById("Prompt").innerHTML = incoming.typed_text;
+        }
+
+        function SaveText() {
+            var namebox = document.getElementById("StudentName");
+            var roombox = document.getElementById("JoinRoomName");
+            var room = roombox.value.toUpperCase();
+            var name = namebox.value;
+            var typedText = document.getElementById("MainBox").value;
+            firebase.database().ref('/' + room + '/' + name + '/').once('value').then(function (snapshot) {
+                if (snapshot.exists()) {
+                    database.ref('/' + room + '/' + name + '/').update({ typed_text: typedText });
+                }
+                else {
+                    firebase.database().ref('/' + room + '/Teacher/').off();
+                    document.getElementById("StudentPrep").style.display = "none";
+                    document.getElementById("StudentBox").style.display = "none";
+                    document.getElementById("LandingBox").style.display = "block";
+                    clearInterval(SaveTimer);
+                }
+            });
+        }
+
+        function updateTeacher(incoming) {
+            if (incoming.val() == null) { return;}
+
+            var kidcount = Object.keys(incoming.val()).length;
+            var kids = Object.keys(incoming.val());
+            var mainTable = document.getElementById("TeacherTable");
+            while (mainTable.rows.length <= kidcount-1) {
+                mainTable.insertRow(-1);
+                mainTable.rows[mainTable.rows.length - 1].insertCell(0);
+                mainTable.rows[mainTable.rows.length - 1].insertCell(1);
+
+            }
+            var rowLine = 1;
+            for (var x = 0; x < kids.length; x++) {
+                if (incoming.val()[kids[x]].userName == "Teacher") { }
+                else {
+                    mainTable.rows[rowLine].cells[0].innerHTML = incoming.val()[kids[x]].userName;
+                    mainTable.rows[rowLine].cells[1].innerHTML = incoming.val()[kids[x]].typed_text;
+                    rowLine += 1;
+                }
+            }
+
+        }
+        var pausing = false;
+        function PauseRoom() {
+            roomName = document.getElementById("TeacherRoomCode").innerHTML;
+            if (pausing) {
+                pausing = false;
+                var WritingUpdate = firebase.database().ref('/' + roomName + '/');
+                WritingUpdate.on('value', function (snapshot) {
+                    updateTeacher(snapshot);
+                });
+                document.getElementById("PauseButton").value = "Pause Updates";
+            }
+            else {
+                pausing = true;
+                firebase.database().ref('/' + roomName + '/').off();
+                document.getElementById("PauseButton").value = "Resume Updates";
+            }
+            
+
+        }
+        function CloseRoom() {
+            if (teacher) {
+                roomName = document.getElementById("TeacherRoomCode").innerHTML
+                firebase.database().ref('/' + roomName + '/').remove();
+                document.getElementById("TeacherBox").style.display = "none";
+                document.getElementById("LandingBox").style.display = "block";
+                clearInterval(TeacherTimer);
+            }
+        }
+
+        function ExportRoom() {
+            var csv = [];
+            var table = document.getElementById("TeacherTable");
+            var rows = table.rows;
+            csv.push("Teacher Prompt:,"+ "\"" + document.getElementById("PromptBox").value+"\"");
+            for (var i = 0; i < rows.length; i++) {
+                var row = [], cols = rows[i].querySelectorAll("td, th");
+
+                for (var j = 0; j < cols.length; j++) {
+                    row.push("\"" + cols[j].innerText + "\"");
+                }
+                csv.push(row.join(","));
+
+
+            }
+
+            // Download CSV file
+            downloadCSV(csv.join("\n"));
+            
+        }
+        function downloadCSV(csv) {
+            var csvFile;
+            var downloadLink;
+
+            // CSV file
+            csvFile = new Blob([csv], { type: "text/csv" });
+
+            // Download link
+            downloadLink = document.createElement("a");
+
+            // File name
+            downloadLink.download = "export.csv";
+
+            // Create a link to the file
+            downloadLink.href = window.URL.createObjectURL(csvFile);
+
+            // Hide download link
+            downloadLink.style.display = "none";
+
+            // Add the link to DOM
+            document.body.appendChild(downloadLink);
+
+            // Click download link
+            downloadLink.click();
+        }
+        var TeacherTimer;
+        function TimePrompt() {
+            TeacherTimer = setInterval(function () {
+                SavePrompt();
+       
+            }, 5000);
+        }
+
+        var SaveTimer;
+        function TimeWriting() {
+            SaveTimer = setInterval(function () {
+                SaveText();
+            
+            }, 1000);
+        }
+
+    </script>
+
+</body>
+</html>
+
+
