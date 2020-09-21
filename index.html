@@ -361,8 +361,8 @@
             var gameID = useString;
             document.getElementById("TeacherRoomCode").innerHTML = gameID;
             
-            document.getElementById("TeacherLink").innerHTML = "mrpbender.github.io/?Join="+gameID;
-            document.getElementById("TeacherLink").href = "https:\\mrpbender.github.io\?Join=" + gameID;
+            document.getElementById("TeacherLink").innerHTML = "https://mrpbender.github.io/?Join="+gameID;
+            document.getElementById("TeacherLink").href = "?Join=" + gameID;
 
             firebase.database().ref('/' + gameID + '/').once('value').then(function (snapshot) {
                 if (snapshot.exists()) {
