@@ -362,7 +362,7 @@
             document.getElementById("TeacherRoomCode").innerHTML = gameID;
             
             document.getElementById("TeacherLink").innerHTML = "mrpbender.github.io/?Join="+gameID;
-            document.getElementById("TeacherLink").href = "file:///C:/Users/Patrick/Documents/GitHub/mrpbender.github.io/index.html?Join=" + gameID;
+            document.getElementById("TeacherLink").href = "https:\\mrpbender.github.io\?Join=" + gameID;
 
             firebase.database().ref('/' + gameID + '/').once('value').then(function (snapshot) {
                 if (snapshot.exists()) {
