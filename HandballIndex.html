@@ -1,0 +1,423 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+    <!-- jQuery library -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <!-- Popper JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+
+    <!-- Latest compiled JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Martel&display=swap" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+    <base target="_top">
+    <style>
+        * {
+            font-family: 'Martel', serif;
+            color: #000000;
+        }
+
+        body {
+            background-color: "rgba(0, 0, 0, 0)";
+        }
+    </style>
+    <base target="_top">
+</head>
+<body onload="GetData()">
+    <br>
+
+    <div class="row sticky-top">
+        <div class="col-sm-1"></div>
+        <div class="col-sm-4">
+            <select id='TeamFilter' class="D-Down w-100" onchange="FilterSeason()"></select>
+        </div>
+        <div class="col-sm-2">
+        </div>
+        <div class="col-sm-4">
+            <select id='SeasonFilter' class="D-Down w-100" onchange="FilterSeason()"></select>
+        </div>
+    </div>
+    <div class="row">
+        <div id='ELOChart' class="col-md-11 text-center" style="height:600px;"></div>
+
+    </div>
+    <br>
+    <div class="row">
+        <!-- <div class="col-1"></div> -->
+        <div class="col-12 text-center">
+            <table class="table table-bordered" id="GameTable">
+                <thead>
+                    <tr class="bg-secondary sticky-top">
+                        <th>Season</th>
+                        <th>Date</th>
+                        <th>Home</th>
+                        <th>Away</th>
+                        <th>Home Score</th>
+                        <th>Away Score</th>
+                        <th>Predicted Margin</th>
+                        <th>Home Win %</th>
+                        <th>Away Win % </th>
+                        <th>Home ELO</th>
+                        <th>Away ELO</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function () {
+
+        });
+        function GetData() {
+            //var scores = google.script.run.withSuccessHandler(MakeInitial).GetScores();
+            $.ajax({
+                type: "GET",
+                url: "HandballELO.csv",
+                dataType: "text",
+                success: function (data) {
+                    MakeInitial(data);
+                }
+            });
+        }
+        var Database = []
+        function MakeInitial(incoming) {
+            var SchoolDrop = document.getElementById("TeamFilter");
+
+            var option = document.createElement("option");
+            option.text = "All Teams";
+            option.value = "League";
+            SchoolDrop.add(option);
+            var TeamList = incoming.map(function (n) { return [n[2].substring(0, 3), n[2].substring(4)] });
+            var Teams = GetUniqueArray(TeamList);
+
+            Teams = Teams.sort(function (a, b) { return a[1].localeCompare(b[1]) })
+            Teams.forEach(function (schl) {
+                var option = document.createElement("option");
+                option.text = schl[1];
+                option.value = schl[0];
+                SchoolDrop.add(option);
+            })
+            var SeasonDrop = document.getElementById("SeasonFilter");
+            var option = document.createElement("option");
+            option.text = "All Seasons";
+            option.value = "Seasons";
+            SeasonDrop.add(option);
+            var SeasonList = getUnique(incoming.map(function (n) { return n[0] }));
+
+            SeasonList.forEach(function (n) {
+                var option = document.createElement("option");
+                option.text = n;
+                option.value = n;
+                SeasonDrop.add(option);
+            })
+
+
+            Database = incoming;
+            MakeCharts(Database);
+        }
+
+        function MakeCharts(incoming) {
+            ClearTable();
+            FilterTeams();
+            var GamesTable = document.getElementById("GameTable");
+            //console.log(incoming)
+            for (var x = 0; x < incoming.length; x++) {
+                incoming[x][1] = new Date(Date.parse(incoming[x][1]));
+            }
+
+            var SeasonEnds = [];
+            var seasons = getUnique(incoming.map(function (n) { return n[0] }));
+            seasons.forEach(function (S) {
+                var seasonDates = incoming.filter(function (n) { return n[0] == S }).map(function (n) { return n[1] });
+                SeasonEnds.push([S, new Date(Math.max.apply(null, seasonDates))]);
+            })
+            // console.log(SeasonEnds)
+            var MissingDates = GetDateRange(new Date("06/11/2017"), new Date("08/23/2017"));
+            for (var x = 0; x < MissingDates.length; x++) {
+                MissingDates[x] = new Date(MissingDates);
+            }
+            var Teams = getUnique(incoming.map(function (n) { return n[2].substring(0, 3) }));
+
+            Teams = Teams.sort(function (a, b) { return a.localeCompare(b) })
+            var TraceHolder = [];
+            var Counter = 0;
+            if (SeasonChart && !TeamChart) { MakeTable(incoming) }
+            var Anno;
+            var Anno2;
+
+            // ///////////////////////////////////////////////
+            //Make Team Traces
+            Teams.forEach(function (Team) {
+                var thisTeam = incoming.filter(function (n) { return n[2].substring(0, 3) == Team || n[3].substring(0, 3) == Team });
+                if (Team == CurrentCode && TeamChart) {
+                    MakeTable(thisTeam);
+
+                }
+                var FirstDate = Math.min(thisTeam.map(function (n) { return n[1] }));
+                SeasonEnds.forEach(function (Ends) {
+
+                    thisTeam.push([Ends[0], new Date(Ends[1]), Team, Team, "", null, null, null, null, null, null])
+
+                })
+
+
+                if (Team == thisTeam[0][2].substring(0, 3)) {
+                    var TeamName = thisTeam[0][2].substring(4);
+                } else {
+                    var TeamName = thisTeam[0][3].substring(4);
+                }
+                thisTeam.sort(function (a, b) { return a[1] - b[1] })
+                //console.log([Team, TeamName])
+                var TeamELO = thisTeam.map(function (n) { if (n[2].substring(0, 3) == Team) { return n[9] } else { return n[10] } });
+                if (Team == CurrentCode) {
+                    var TeamDate = thisTeam.map(function (n) {
+                        if (n[3] != null) {
+                            var col = 9
+                            if (n[2].substring(0, 3) == Team) { col = 9 } else { col = 10 }
+                            return [n[1], n[col]]
+                        }
+                    })
+                    // console.log(TeamDate)
+                    var MaxElo = Math.max.apply(null, TeamDate.map(function (w) { return w[1] }));
+                    console.log(MaxElo)
+                    var MaxDate = TeamDate[TeamELO.indexOf(MaxElo)][0];
+                    Anno = {
+                        x: MaxDate,
+                        y: MaxElo,
+                        xref: 'x',
+                        yref: 'y',
+                        text: 'Highest ELO<br>' + (MaxDate.getMonth() + 1) + "/" + MaxDate.getDate() + "/" + MaxDate.getFullYear() + " " + Math.floor(MaxElo),
+                        showarrow: true,
+                        arrowhead: 2,
+                        arrowwidth: 2,
+                        arrowcolor: '#000000',
+                        ax: 0,
+                        ay: -50,
+                        bordercolor: '#c7c7c7',
+                        borderwidth: 2,
+                        borderpad: 4,
+                        bgcolor: '#a69da5',
+                    }
+                    var MinElo = Math.min.apply(null, TeamDate.map(function (w) { return w[1] }).filter(function (n) { return n > 10 }));
+                    console.log(MinElo)
+                    var MinDate = TeamDate[TeamELO.indexOf(MinElo)][0];
+                    Anno2 = {
+                        x: MinDate,
+                        y: MinElo,
+                        xref: 'x',
+                        yref: 'y',
+                        text: 'Lowest ELO<br>' + (MinDate.getMonth() + 1) + "/" + MinDate.getDate() + "/" + MinDate.getFullYear() + " " + Math.floor(MinElo),
+                        showarrow: true,
+                        arrowhead: 2,
+                        arrowwidth: 2,
+                        arrowcolor: '#000000',
+                        ax: 0,
+                        ay: 50,
+                        bordercolor: '#c7c7c7',
+                        borderwidth: 2,
+                        borderpad: 4,
+                        bgcolor: '#a69da5',
+                    }
+
+                }
+                var Opac = .85;
+                var HoverText = TeamName + "<br>Date: %{x}<br>Home: %{customdata[0]} (Elo: %{customdata[4]:.0f}): %{customdata[2]}<br>" +
+                    "Away: %{customdata[1]} (Elo: %{customdata[5]:.0f}): %{customdata[3]}" +
+                    "<extra></extra>";
+                var Hoverinfo = "";
+                var LineWidth = 4;
+                if (CurrentCode != "") {
+                    if (Team == CurrentCode) {
+                        Opac = 1.0;
+                        LineWidth = 7;
+                    } else {
+                        HoverText = "<extra></extra>";
+                        Opac = .2;
+                        LineWidth = 2;
+                    }
+                }
+                var Custom = thisTeam.map(function (n) {
+                    return [n[2].substring(4),
+                    n[3].substring(4),
+                    n[4],
+                    n[5],
+                    n[9],
+                    n[10],
+                        TeamName]
+                });
+                var newTrace = {
+                    x: thisTeam.map(function (n) { return n[1] }),
+                    y: TeamELO,
+                    mode: 'lines',
+                    name: Team,
+                    line: {
+                        width: LineWidth,
+                        color: ColorsList[Counter]
+                    },
+                    customdata: Custom,
+                    text: TeamELO.forEach(function (n) { return Math.floor(n) }),
+                    hovertemplate: HoverText,
+                    connectgaps: false,
+                    opacity: Opac
+                }
+                TraceHolder.push(newTrace)
+                Counter += 1;
+            })
+
+            var layout = {
+                title: 'Handball ELO',
+                plot_bgcolor: "#f1f2f6",
+                xaxis: {
+                    autorange: 'false',
+                    // range:
+                    type: "date",
+                    rangebreaks: {
+                        //values:MissingDates
+                        bounds: [Date.parse(new Date("07/01/2017")), Date.parse(new Date("08/10/2017"))],
+                    }
+                },
+                yaxis: {
+                    range: [1100, 1900]
+                },
+                legend: { "orientation": "h" },
+                //height: 600,
+                hovermode: "closest",
+                annotations: [Anno, Anno2],
+                paper_bgcolor: "rgba(25, 25, 25, 0)"
+            };
+            var config = {
+                responsive: true, displayModeBar: true,
+                toImageButtonOptions: {
+                    format: 'png', // one of png, svg, jpeg, webp
+                    filename: 'HandballELO',
+                    height: 500,
+                    width: 900,
+                    scale: 1 // Multiply title/legend/axis/canvas sizes by this factor
+                }
+            }
+            Plotly.newPlot('ELOChart', TraceHolder, layout, config);
+        }
+        var CurrentCode = "";
+        var TeamChart = false;
+        function FilterTeams() {
+            CurrentCode = document.getElementById("TeamFilter").value;
+            TeamChart = true;
+            if (CurrentCode == "League") {
+                CurrentCode = "";
+                TeamChart = false;
+            }
+            //MakeCharts(Database);
+
+
+        }
+        var SeasonChart = false;
+        function FilterSeason() {
+            var Season = document.getElementById("SeasonFilter").value;
+            if (Season != "Seasons") {
+                SeasonChart = true;
+                MakeCharts(Database.filter(function (n) { return n[0] == Season }));
+            }
+            else {
+                SeasonChart = false;
+                MakeCharts(Database)
+            }
+        }
+
+        function GetUniqueArray(incoming) {
+            var Holder = [];
+            var Codes = getUnique(incoming.map(function (n) { return n[0] }));
+            Codes.forEach(function (n) {
+                var Team = incoming.filter(function (T) { return T[0] == n })[0][1];
+                Holder.push([n, Team]);
+            });
+            return Holder;
+        }
+
+        function getUnique(incoming) {
+            var holder = [];
+            incoming.forEach(function (n) {
+                if (holder.indexOf(n) == -1) {
+                    holder.push(n)
+                }
+            });
+            return holder;
+        }
+
+        function GetDateRange(start, end) {
+
+            var
+                arr = new Array(),
+                dt = new Date(start);
+
+            while (dt <= end) {
+                arr.push(new Date(dt));
+                dt.setDate(dt.getDate() + 1);
+            }
+
+            return arr;
+
+        }
+        function ClearTable() {
+            var Table = document.getElementById("GameTable")
+            while (GameTable.rows.length > 1) {
+                GameTable.deleteRow(-1)
+            }
+        }
+
+        function MakeTable(incoming) {
+            var GamesTable = document.getElementById("GameTable");
+            var thisTeam = incoming;
+            for (var x = 0; x < thisTeam.length; x++) {
+                var NewRow = GamesTable.insertRow(-1);
+                if (x % 2 === 1) { NewRow.classList.add("bg-light") }
+                if (thisTeam[x][7] != 0) {
+                    for (var y = 0; y < thisTeam[x].length; y++) {
+                        var NewCell = NewRow.insertCell(y);
+                        if (y == 9 || y == 10) {
+                            NewCell.innerHTML = Math.floor(thisTeam[x][y]);
+                        } else if (y == 7 || y == 8) {
+                            NewCell.innerHTML = Number(thisTeam[x][y])
+                                .toLocaleString(undefined, { style: 'percent', minimumFractionDigits: 0 });
+                        } else if (y == 2 || y == 3) {
+                            NewCell.innerHTML = thisTeam[x][y].substring(4);
+                        } else if (y == 1) {
+                            var GameDate = new Date(thisTeam[x][y])
+                            NewCell.innerHTML = (GameDate.getMonth() + 1) + "/" + GameDate.getDate() + "/" + GameDate.getFullYear();
+                        } else if (y == 6) {
+                            if (thisTeam[x][y] < 0) {
+                                NewCell.innerHTML = "Away +" + Math.abs(thisTeam[x][y])
+                            } else {
+                                NewCell.innerHTML = "Home +" + Math.abs(thisTeam[x][y])
+                            }
+                        } else {
+                            NewCell.innerHTML = thisTeam[x][y];
+                        }
+                    }
+                }
+            }
+        }
+
+        var ColorsList = ["#000000", "#FFFF00", "#1CE6FF", "#FF34FF", "#FF4A46", "#008941", "#006FA6", "#A30059",
+            "#A4E804", "#7A4900", "#0000A6", "#63FFAC", "#B79762", "#004D43", "#8FB0FF", "#997D87",
+            "#5A0007", "#809693", "#6A3A4C", "#1B4400", "#4FC601", "#3B5DFF", "#4A3B53", "#FF2F80",
+            "#61615A", "#BA0900", "#6B7900", "#00C2A0", "#FFAA92", "#FF90C9", "#B903AA", "#D16100",
+            "#DDEFFF", "#000035", "#7B4F4B", "#A1C299", "#300018", "#0AA6D8", "#013349", "#00846F",
+            "#372101", "#FFB500", "#C2FFED", "#A079BF", "#CC0744", "#C0B9B2", "#C2FF99", "#001E09",
+            "#00489C", "#6F0062", "#0CBD66", "#EEC3FF", "#456D75", "#B77B68", "#7A87A1", "#788D66",
+            "#885578", "#FAD09F", "#FF8A9A", "#D157A0", "#BEC459", "#456648", "#0086ED", "#886F4C",
+            "#34362D", "#B4A8BD", "#00A6AA", "#452C2C", "#636375", "#A3C8C9", "#FF913F", "#938A81",
+            "#575329", "#00FECF", "#B05B6F", "#8CD0FF", "#3B9700", "#04F757", "#C8A1A1", "#1E6E00",
+            "#7900D7", "#A77500", "#6367A9", "#A05837", "#6B002C", "#772600", "#D790FF", "#9B9700",
+            "#549E79", "#FFF69F", "#201625", "#72418F", "#BC23FF", "#99ADC0", "#3A2465", "#922329",
+            "#5B4534", "#FDE8DC", "#404E55", "#0089A3", "#CB7E98", "#A4E804", "#324E72", "#6A3A4C"]
+    </script>
+</body>
+</html>
