@@ -81,6 +81,7 @@
             $.ajax({
                 type: "GET",
                 url: "https://raw.githubusercontent.com/mrpbender/mrpbender.github.io/master/HandballELO.csv",
+                //url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vS7cYA20w0I8GQVy6yQnvYiJ7-kavcnQia37stcvMoK6TfgiqVHa1JUnrrsaO47sayL63K4_Lc-Fryl/pub?gid=1422892875&single=true&output=csv",
                 dataType: "text",
                 success: function (data) {
                     var allTextLines = data.split(/\r\n|\n/);
