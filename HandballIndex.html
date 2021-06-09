@@ -25,7 +25,7 @@
         }
 
         body {
-            background-color: "rgba(0, 0, 0, 0)";
+            background-color: #ffffb3;
         }
     </style>
     <base target="_top">
@@ -45,7 +45,7 @@
         </div>
     </div>
     <div class="row">
-        <div id='ELOChart' class="col-md-11 text-center" style="height:600px;"></div>
+        <div id='ELOChart' class="col-md-12 text-center" style="height:600px;"></div>
 
     </div>
     <br>
@@ -54,7 +54,7 @@
         <div class="col-12 text-center">
             <table class="table table-bordered" id="GameTable">
                 <thead>
-                    <tr class="bg-secondary sticky-top">
+                    <tr class="bg-secondary sticky-top" z-index:2>
                         <th>Season</th>
                         <th>Date</th>
                         <th>Home</th>
@@ -80,10 +80,23 @@
             //var scores = google.script.run.withSuccessHandler(MakeInitial).GetScores();
             $.ajax({
                 type: "GET",
-                url: "HandballELO.csv",
+                url: "https://raw.githubusercontent.com/mrpbender/mrpbender.github.io/master/HandballELO.csv",
                 dataType: "text",
                 success: function (data) {
-                    MakeInitial(data);
+                    var allTextLines = data.split(/\r\n|\n/);
+                    //console.log(allTextLines)
+                    var headers = allTextLines[0].split(",");
+                    console.log(headers)
+                    var lines = [];
+
+                    for (var i = 1; i < allTextLines.length; i++) {
+                        var dataset = allTextLines[i].split(',');
+                        dataset = dataset.slice(0, 11)
+                            Database.push(dataset);
+                        
+                    }
+                    console.log(Database)
+                    MakeInitial(Database);
                 }
             });
         }
@@ -177,18 +190,20 @@
                 thisTeam.sort(function (a, b) { return a[1] - b[1] })
                 //console.log([Team, TeamName])
                 var TeamELO = thisTeam.map(function (n) { if (n[2].substring(0, 3) == Team) { return n[9] } else { return n[10] } });
+                //console.log(TeamELO)
                 if (Team == CurrentCode) {
                     var TeamDate = thisTeam.map(function (n) {
-                        if (n[3] != null) {
+                        if (n[4] != null) {
                             var col = 9
                             if (n[2].substring(0, 3) == Team) { col = 9 } else { col = 10 }
                             return [n[1], n[col]]
                         }
-                    })
-                    // console.log(TeamDate)
+                    }).filter(function (n) { return n[1] != null;})
+                   //console.log(TeamDate)
                     var MaxElo = Math.max.apply(null, TeamDate.map(function (w) { return w[1] }));
-                    console.log(MaxElo)
-                    var MaxDate = TeamDate[TeamELO.indexOf(MaxElo)][0];
+                    var ELOInt = TeamDate.map(function (n) { return parseInt(n[1]) });
+
+                    var MaxDate = TeamDate[ELOInt.indexOf(parseInt(MaxElo))][0];
                     Anno = {
                         x: MaxDate,
                         y: MaxElo,
@@ -206,9 +221,9 @@
                         borderpad: 4,
                         bgcolor: '#a69da5',
                     }
-                    var MinElo = Math.min.apply(null, TeamDate.map(function (w) { return w[1] }).filter(function (n) { return n > 10 }));
+                    var MinElo = Math.min.apply(null, TeamDate.map(function (w) { return parseInt(w[1]) }).filter(function (n) { return n > 10 }));
                     console.log(MinElo)
-                    var MinDate = TeamDate[TeamELO.indexOf(MinElo)][0];
+                    var MinDate = TeamDate[ELOInt.indexOf(parseInt(MinElo))][0];
                     Anno2 = {
                         x: MinDate,
                         y: MinElo,
