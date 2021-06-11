@@ -72,6 +72,9 @@
         </div>
     </div>
 
+
+
+
     <script>
         $(document).ready(function () {
 
@@ -93,8 +96,8 @@
                     for (var i = 1; i < allTextLines.length; i++) {
                         var dataset = allTextLines[i].split(',');
                         dataset = dataset.slice(0, 11)
-                            Database.push(dataset);
-                        
+                        Database.push(dataset);
+
                     }
                     console.log(Database)
                     MakeInitial(Database);
@@ -199,8 +202,8 @@
                             if (n[2].substring(0, 3) == Team) { col = 9 } else { col = 10 }
                             return [n[1], n[col]]
                         }
-                    }).filter(function (n) { return n[1] != null;})
-                   //console.log(TeamDate)
+                    }).filter(function (n) { return n[1] != null; })
+                    //console.log(TeamDate)
                     var MaxElo = Math.max.apply(null, TeamDate.map(function (w) { return w[1] }));
                     var ELOInt = TeamDate.map(function (n) { return parseInt(n[1]) });
 
@@ -434,6 +437,47 @@
             "#7900D7", "#A77500", "#6367A9", "#A05837", "#6B002C", "#772600", "#D790FF", "#9B9700",
             "#549E79", "#FFF69F", "#201625", "#72418F", "#BC23FF", "#99ADC0", "#3A2465", "#922329",
             "#5B4534", "#FDE8DC", "#404E55", "#0089A3", "#CB7E98", "#A4E804", "#324E72", "#6A3A4C"]
+    </script>
+
+
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script>
+        /**
+         * Sample JavaScript code for sheets.spreadsheets.values.get
+         * See instructions for running APIs Explorer code samples locally:
+         * https://developers.google.com/explorer-help/guides/code_samples#javascript
+         */
+
+        function authenticate() {
+            return gapi.auth2.getAuthInstance()
+                .signIn({ scope: "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/spreadsheets.readonly" })
+                .then(function () { console.log("Sign-in successful"); },
+                    function (err) { console.error("Error signing in", err); });
+        }
+        function loadClient() {
+            gapi.client.setApiKey("YOUR_API_KEY");
+            return gapi.client.load("https://sheets.googleapis.com/$discovery/rest?version=v4")
+                .then(function () { console.log("GAPI client loaded for API"); },
+                    function (err) { console.error("Error loading GAPI client for API", err); });
+        }
+        // Make sure the client is loaded and sign-in is complete before calling this method.
+        function execute() {
+            return gapi.client.sheets.spreadsheets.values.get({
+                "spreadsheetId": "1jYPZOz7qUyKtPw8QBOL-K7Wd4IID-htIEAoxTeh84MI",
+                "range": "Sheet7!A:G",
+                "dateTimeRenderOption": "FORMATTED_STRING",
+                "majorDimension": "ROWS",
+                "valueRenderOption": "FORMATTED_VALUE"
+            })
+                .then(function (response) {
+                    // Handle the results here (response.result has the parsed body).
+                    console.log("Response", response);
+                },
+                    function (err) { console.error("Execute error", err); });
+        }
+        gapi.load("client:auth2", function () {
+            gapi.auth2.init({ client_id: "YOUR_CLIENT_ID" });
+        });
     </script>
 </body>
 </html>
