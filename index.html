@@ -455,7 +455,7 @@
                     function (err) { console.error("Error signing in", err); });
         }
         function loadClient() {
-            gapi.client.setApiKey("YOUR_API_KEY");
+            gapi.client.setApiKey("AIzaSyAd860nAh3B2QrSIzHv-H8gmCN-MaXy1Qk");
             return gapi.client.load("https://sheets.googleapis.com/$discovery/rest?version=v4")
                 .then(function () { console.log("GAPI client loaded for API"); },
                     function (err) { console.error("Error loading GAPI client for API", err); });
@@ -476,7 +476,7 @@
                     function (err) { console.error("Execute error", err); });
         }
         gapi.load("client:auth2", function () {
-            gapi.auth2.init({ client_id: "YOUR_CLIENT_ID" });
+            gapi.auth2.init({ client_id: "246480308666-rtokrnp4etd4rgki4rbk1dndpg6k6hi5.apps.googleusercontent.com" });
         });
     </script>
 </body>
